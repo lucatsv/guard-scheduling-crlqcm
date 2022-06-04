@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const bodyParser = require('body-parser')
 
 const guardRoute = require('./routes/guard' )
+const contractRoute = require('./routes/contract' )
 
 require('dotenv/config')
 
@@ -12,6 +13,7 @@ app.use(bodyParser.json())
 
 // routes configuration
 app.use('/guard', guardRoute)
+app.use('/contract', contractRoute)
 
 app.get('/health', async (req, res) => {
     try {
