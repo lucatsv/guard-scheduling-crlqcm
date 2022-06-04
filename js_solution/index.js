@@ -1,8 +1,8 @@
 const express = require('express')
-
 const mongoose = require('mongoose')
-
 const bodyParser = require('body-parser')
+
+const guardRoute = require('./routes/guard' )
 
 require('dotenv/config')
 
@@ -10,9 +10,12 @@ const app = express()
 
 app.use(bodyParser.json())
 
-app.get('/', async (req, res) => {
+// routes configuration
+app.use('/guard', guardRoute)
+
+app.get('/health', async (req, res) => {
     try {
-        const connection = await mongoose.connect(process.env.DB_CONNECTION_STRING)
+        await connectToDB()
         res.status(200).json({ message : "it works!" })
     } catch (error) {
         console.error(error)
@@ -20,5 +23,14 @@ app.get('/', async (req, res) => {
     }
 })
 
+const connectToDB = async () => {
+    return await mongoose.connect(process.env.DB_CONNECTION_STRING)
+}
+
+connectToDB().then(() => {
+    console.log("All good! Connected to DB successfuly")
+}).catch((error) => {
+    console.error(`Error! ${ error }`)
+})
 
 app.listen(3000)
