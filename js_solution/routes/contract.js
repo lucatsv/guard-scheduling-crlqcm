@@ -15,7 +15,8 @@ router.post('/', async (req, res) => {
 
     const contract = new Contract({
         name : req.body.name,
-        fireArmLicense : req.body.fireArmLicense
+        daysOfWeek : req.body.daysOfWeek,
+        requireArmedGuard : req.body.requireArmedGuard
     }) 
 
     try {
