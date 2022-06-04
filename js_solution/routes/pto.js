@@ -18,16 +18,9 @@ router.put('/', async (req, res) => {
     }) 
 
     try {
-        const existingPTO = await PTO.findOne({ guardId : pto.guardId })
-        existingPTO
-        console.log( { existingPTO } )
-        let guardPTO = {}
-        if(existingPTO) {
-            guardPTO = await PTO.updateOne({ guardId : pto.guardId }, { $set : { 
-                guardId : pto.guardId,
-                date : pto.date
-            } })
-        } else {
+        const existingPTO = await PTO.findOne({ guardId : pto.guardId, date : pto.date })
+        let guardPTO = existingPTO
+        if(!existingPTO) {
             guardPTO = await pto.save()
         }
         res.status(200).json(guardPTO)
