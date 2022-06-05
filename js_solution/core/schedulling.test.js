@@ -1,4 +1,4 @@
-const { findEligibleGuards, findAvailableGuardsOnDay, getPTOPerGuard, getContractWorkingDays, getScheduleOptions, createSchedule } = require('./schedulling')
+const { findEligibleGuards, findAvailableGuardsOnDay, getPTOPerGuard, getContractWorkingDays, getScheduleOptions, createSchedule, UNAVAILABLE_GUARDS_ERROR_MESSAGE } = require('./schedulling')
 
 
 test('1. Contract Requires Firearm - Should Return Eligible Guards ', () => {
@@ -43,7 +43,7 @@ test('2. Contract Does NOT Require Firearm - Should Return Eligible Guards ', ()
     expect(findEligibleGuards(guards, contract).length).toBe(3)
 })
 
-test('4. Given a contract with Seven days work - it should return the right days of work', () => {
+test('3. Given a contract with Seven days work - it should return the right days of work', () => {
     const contract = {
         daysOfWeek : [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
@@ -53,7 +53,7 @@ test('4. Given a contract with Seven days work - it should return the right days
 
 })
 
-test('5. Given a contract with Seven days work, and an interval of two days - it should return the right days of work', () => {
+test('4. Given a contract with Seven days work, and an interval of two days - it should return the right days of work', () => {
     const contract = {
         daysOfWeek : [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
@@ -62,7 +62,7 @@ test('5. Given a contract with Seven days work, and an interval of two days - it
     expect( workingDays.length ).toBe(2)
 })
 
-test('6. Given a Contract, Guards, and PTO List - it should return a list of available guards', () => {
+test('5. Given a Contract, Guards, and PTO List - it should return a list of available guards', () => {
     const guards = [
         {
             _id : '123',
@@ -122,7 +122,7 @@ test('6. Given a Contract, Guards, and PTO List - it should return a list of ava
 
 })
 
-test('7. Given a contract with Seven days work - it should return the right days of work', () => {
+test('6. Given a contract with Seven days work - it should return the right days of work', () => {
     const contract = {
         daysOfWeek : [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
@@ -132,7 +132,7 @@ test('7. Given a contract with Seven days work - it should return the right days
 
 })
 
-test('8. Given a contract with Seven days work, and an interval of two days - it should return the right days of work', () => {
+test('7. Given a contract with Seven days work, and an interval of two days - it should return the right days of work', () => {
     const contract = {
         daysOfWeek : [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
@@ -141,7 +141,7 @@ test('8. Given a contract with Seven days work, and an interval of two days - it
     expect( workingDays.length ).toBe(2)
 })
 
-test('9. Given a Contract, and all Guards on PTO on a working day - it should return an empty list of available guards for a certain day', () => {
+test('8. Given a Contract, and all Guards on PTO on a working day - it should return an empty list of available guards for a certain day', () => {
 
     const eligibleGuards = findEligibleGuards(mockGuards, mockContract)
 
@@ -153,7 +153,7 @@ test('9. Given a Contract, and all Guards on PTO on a working day - it should re
 
 })
 
-test('10. ', () => {
+test('9. Given contract, guards, PTO schedule, and range of working days - it should create the contract schedule ', () => {
     
     const options = getScheduleOptions(mockContract, mockGuards, mockPtos, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 6))
 
@@ -177,7 +177,127 @@ test('10. ', () => {
 
     const schedule = createSchedule(options)
 
-    console.log(schedule)
+    expect(schedule.length).toBe(3);
+    expect(schedule.filter(s => s.guard === "Luke").length).toBe(2);
+    expect(schedule.filter(s => s.guard === "Matthew").length).toBe(1);
+})
+
+test('10. Given contract, all guards in PTO, PTO schedule, and range of working days - it should return error message when cannot find guards ', () => {
+    
+    const contract = {
+        _id : '1234567',
+        name : "Home Depot",
+        daysOfWeek : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        requireArmedGuard : true
+    }
+    
+    const guards = [
+        {
+            _id : '123',
+            name: "Matthew",
+            fireArmLicense: true
+        },
+        {
+            _id : '456',
+            name: "Mark",
+            fireArmLicense: false
+        },
+    ]
+    
+    const ptos = [
+        {
+            guardId : '123',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '123',
+            date: new Date(2022, 6 - 1, 5)
+        },
+        {
+            guardId : '123',
+            date: new Date(2022, 6 - 1, 6)
+        },
+        {
+            guardId : '456',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '456',
+            date: new Date(2022, 6 - 1, 5)
+        },
+        {
+            guardId : '456',
+            date: new Date(2022, 6 - 1, 6)
+        },
+
+    ]
+
+    const options = getScheduleOptions(contract, guards, ptos, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 6))
+
+    const schedule = createSchedule(options)
+
+    schedule.forEach((s) => {
+        expect(s.message).toBe(UNAVAILABLE_GUARDS_ERROR_MESSAGE)
+    })
+})
+
+test('11. Given contract, ineligible guards, PTO schedule, and range of working days - it should return error message when cannot find guards ', () => {
+    
+    const contract = {
+        _id : '1234567',
+        name : "Home Depot",
+        daysOfWeek : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        requireArmedGuard : true
+    }
+    
+    const guards = [
+        {
+            _id : '123',
+            name: "Matthew",
+            fireArmLicense: false
+        },
+        {
+            _id : '456',
+            name: "Mark",
+            fireArmLicense: false
+        },
+    ]
+    
+    const ptos = [
+        {
+            guardId : '123',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '123',
+            date: new Date(2022, 6 - 1, 5)
+        },
+        {
+            guardId : '123',
+            date: new Date(2022, 6 - 1, 6)
+        },
+        {
+            guardId : '456',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '456',
+            date: new Date(2022, 6 - 1, 5)
+        },
+        {
+            guardId : '456',
+            date: new Date(2022, 6 - 1, 6)
+        },
+
+    ]
+
+    const options = getScheduleOptions(contract, guards, ptos, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 6))
+
+    const schedule = createSchedule(options)
+
+    schedule.forEach((s) => {
+        expect(s.message).toBe(UNAVAILABLE_GUARDS_ERROR_MESSAGE)
+    })
 })
 
 const mockContract = {

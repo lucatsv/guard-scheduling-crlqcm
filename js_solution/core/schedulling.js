@@ -1,8 +1,6 @@
-const e = require("express")
+const UNAVAILABLE_GUARDS_ERROR_MESSAGE = "Sorry! We could not find available guards"
 
 const findEligibleGuards = (guards, contract) => {
-    const requireArmedGuard = contract.requireArmedGuard
-
     if (contract.requireArmedGuard) {
         return guards.filter(g => g.fireArmLicense)
     }
@@ -118,12 +116,16 @@ const createSchedule = (scheduleOption) => {
         const leastAvailable = leastAvailableGuardFromPossibleGuards(guardsShiftAvailability, guardsAvailableOnTheDay)
 
         const normalizedDate = (new Date(date)).toLocaleString("en-US").split(', ')[0]
-        console.log()
-        schedule.push( { date : normalizedDate, guard : flatScheduleGuardOptions.find(g => g._id === leastAvailable.guardId)?.name } )
+
+        const scheduledGuard = flatScheduleGuardOptions.find(g => g._id === leastAvailable.guardId)?.name
+
+        if(scheduledGuard) {
+            schedule.push( { date : normalizedDate, guard : scheduledGuard } )
+        } else {
+            schedule.push( { date : normalizedDate, message : UNAVAILABLE_GUARDS_ERROR_MESSAGE } )
+
+        }
     })
-
-
-
 
     return schedule
 }
@@ -135,5 +137,4 @@ const addElementsToObjectArrayProperty = (object, propertyName, elements) => {
     object[propertyName].push(...elements)
 }
 
-
-module.exports = { findEligibleGuards, findAvailableGuardsOnDay, getPTOPerGuard, getContractWorkingDays, getScheduleOptions, createSchedule }
+module.exports = { findEligibleGuards, findAvailableGuardsOnDay, getPTOPerGuard, getContractWorkingDays, getScheduleOptions, createSchedule, UNAVAILABLE_GUARDS_ERROR_MESSAGE }
