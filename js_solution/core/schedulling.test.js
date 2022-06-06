@@ -250,6 +250,10 @@ test('10. Given contract, all guards in PTO, PTO schedule, and range of working 
         },
         {
             guardId : '456',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '456',
             date: new Date(2022, 6 - 1, 5)
         },
         {
@@ -367,14 +371,86 @@ test('14. Given list of contracts, list of guards and their PTO, and date range 
     expect(optionsPerContract[1].option[contract2SecondDay].length).toBe(4)
 })
 
-test('15. ', () => {
+test('15. Given a List of Contracts, guards and their PTOs, and a date range - it should return the schedule', () => {
     const optionsPerContract = getScheduleOptionsPerContract(mockOfContractsList, mockGuards, mockPtos, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 7))
 
-    console.log(optionsPerContract)
+    const schedule = createScheduleForAllContracts(mockOfContractsList, optionsPerContract)
 
-
-    const schedule = createScheduleForAllContracts(optionsPerContract)
+    expect(schedule.filter(s => s.contract === "Home Depot").length).toBe(4)
+    expect(schedule.filter(s => s.contract === "Walmart").length).toBe(2)
+    
+    expect(schedule.filter(s => s.guard === "Luke").length).toBe(2)
+    expect(schedule.filter(s => s.guard === "Matthew").length).toBe(2)
+    expect(schedule.filter(s => s.guard === "John").length).toBe(1)
+    expect(schedule.filter(s => s.guard === "Mark").length).toBe(1)
 })
+
+test('16. Given a List of Contracts and all guards aways - it should return an error message', () => {
+
+    const allGuardsOnPTOForTheGivenRange = [
+        {
+            guardId : '123',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '123',
+            date: new Date(2022, 6 - 1, 5)
+        },
+        {
+            guardId : '456',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '456',
+            date: new Date(2022, 6 - 1, 5)
+        },
+        {
+            guardId : '789',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '789',
+            date: new Date(2022, 6 - 1, 5)
+        },
+        {
+            guardId : '1011',
+            date: new Date(2022, 6 - 1, 4)
+        },
+        {
+            guardId : '1011',
+            date: new Date(2022, 6 - 1, 5)
+        },
+    ]
+
+    const optionsPerContract = getScheduleOptionsPerContract(mockOfContractsList, mockGuards, allGuardsOnPTOForTheGivenRange, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 5))
+
+    const schedule = createScheduleForAllContracts(mockOfContractsList, optionsPerContract)
+
+    expect(schedule.every(s => s.guard === UNAVAILABLE_GUARDS_ERROR_MESSAGE)).toBe(true)
+})
+
+test('17. Given a List of Contracts and all guards do NOT meet contract requirement - it should return an error message', () => {
+
+    const guardsDoNotHoldFirearmLicense = [
+        {
+            _id : '123',
+            name: "Matthew",
+            fireArmLicense: false
+        },
+        {
+            _id : '456',
+            name: "Mark",
+            fireArmLicense: false
+        }
+    ]
+
+    const optionsPerContract = getScheduleOptionsPerContract([mockContract], guardsDoNotHoldFirearmLicense, mockPtos, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 5))
+
+    const schedule = createScheduleForAllContracts(mockOfContractsList, optionsPerContract)
+
+    expect(schedule.every(s => s.guard === UNAVAILABLE_GUARDS_ERROR_MESSAGE)).toBe(true)
+})
+
 
 const mockContract = {
     _id : '1234567',

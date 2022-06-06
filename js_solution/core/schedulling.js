@@ -102,10 +102,6 @@ const getScheduleOptions = (contract, guards, ptos, from, to) => {
 
 const getScheduleOptionsPerContract = (contracts, guards, ptos, from, to) => {
 
-    const eligibleGuardsPerContract = findEligibleGuardsPerContract(contracts, contracts)
-    const guardsPTO = getPTOPerGuard(ptos)
-    const workingDaysPerContract = getContractsWorkDays(contracts, from, to)
-
     const scheduleOptionPerContract = []
 
     for(const contract of contracts) {
@@ -114,7 +110,6 @@ const getScheduleOptionsPerContract = (contracts, guards, ptos, from, to) => {
     }
 
     return scheduleOptionPerContract
-
 }
 
 const findEligibleGuardsPerContract = (contracts, guards) => {
@@ -171,7 +166,7 @@ const createSchedule = (scheduleOption) => {
     return schedule
 }
 
-const createScheduleForAllContracts = (scheduleOptionPerContract) => {
+const createScheduleForAllContracts = (contract, scheduleOptionPerContract) => {
     
     const schedule = []
     
@@ -181,13 +176,12 @@ const createScheduleForAllContracts = (scheduleOptionPerContract) => {
 
             const guard = contractOption.option[day][0]
 
-            schedule.push({ day, contractId : contractOption.contractId, guard : guard?.name })
+            schedule.push({ day, contract : contract.find(c => c._id === contractOption.contractId).name, guard : guard ? guard.name : UNAVAILABLE_GUARDS_ERROR_MESSAGE })
 
             assignGuardToShift(scheduleOptionPerContract, day.toString(), guard)
         })
     }
 
-    console.log({ schedule })
     return schedule
 }
 
@@ -199,20 +193,7 @@ const assignGuardToShift = (scheduleOptionPerContract, day, guard) => {
                 contractSchedule.option[scheduleDay] = contractSchedule.option[scheduleDay].filter(g => g._id !== guard?._id)
          
         })
-
-       //console.log(day, 2, contractSchedule, contractSchedule[day.toString()])
     }
-
-}
-
-const doStuff = (shifts) => {
-    const availableGuards = []
-    for(const shift of shifts) 
-    {
-        availableGuards = [...shift.guards]
-    }
-
-    return availableGuards
 }
 
 const addElementsToObjectArrayProperty = (object, propertyName, elements) => {

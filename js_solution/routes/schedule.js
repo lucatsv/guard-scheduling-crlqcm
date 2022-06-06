@@ -28,7 +28,6 @@ router.get('/:contractId', async (req, res) => {
     }
 })
 
-
 router.get('/', async (req, res) => {
     try {
         const {fromDate, toDate} = req.query
@@ -39,10 +38,9 @@ router.get('/', async (req, res) => {
 
         const contractsScheduleOptions = getScheduleOptionsPerContract(contracts, guards, ptos, fromDate, toDate)
 
-        const schedule = createScheduleForAllContracts(contractsScheduleOptions)
+        const schedule = createScheduleForAllContracts(contracts, contractsScheduleOptions)
 
         res.status(200).json(schedule)
-
     } catch(error) {
         logger.error(error)
         res.status(500).json({ "error" : 'Internal error'})
