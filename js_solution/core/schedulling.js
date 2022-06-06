@@ -1,3 +1,18 @@
+
+// Scheduling algorithm 
+// 1. For each contract, find guards that meet its requirement => eligible guards
+
+// 2. For each guard, find their PTOs  => PTOs per guard
+
+// 3. For each contract, find the working days for the given date range => contract working days
+
+// 4. For each contract, find the availability of the eligible guards during the contract working days. Check if guard is on PTO for a given day. => available guards
+
+// 5. For each contract, add a list of available guards for each contract working day => Schedule option
+
+// 6. For each schedule option, assign an available guard to a contract on a contract working day. 
+// When assigning a guard to a contract on a certain day, make that guard unavailable on the same day for other contracts.
+
 const UNAVAILABLE_GUARDS_ERROR_MESSAGE = "Sorry! We could not find available guards"
 
 const findEligibleGuards = (guards, contract) => {
