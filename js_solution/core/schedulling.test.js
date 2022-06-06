@@ -1,5 +1,19 @@
-const { findEligibleGuards, findAvailableGuardsOnDay, getPTOPerGuard, getContractWorkingDays, getScheduleOptions, createSchedule, UNAVAILABLE_GUARDS_ERROR_MESSAGE } = require('./schedulling')
+const { findEligibleGuards, findAvailableGuardsOnDay, getPTOPerGuard, getContractWorkDays, getScheduleOptions, getScheduleOptionsPerContract, createSchedule, createScheduleForAllContracts, findEligibleGuardsPerContract, getContractsWorkDays, UNAVAILABLE_GUARDS_ERROR_MESSAGE } = require('./schedulling')
 
+test('0. Given Eligible Guards and their PTO schedule - it should return the list of available guards for a given date', () => {
+
+    const eligibleGuards = findEligibleGuards(mockGuards, mockContract)
+    const guardsPto = getPTOPerGuard(mockPtos)
+
+    const av4 = findAvailableGuardsOnDay(eligibleGuards, guardsPto, new Date(2022, 6 -1, 4))
+    const av5 = findAvailableGuardsOnDay(eligibleGuards, guardsPto, new Date(2022, 6 -1, 5))
+    const av6 = findAvailableGuardsOnDay(eligibleGuards, guardsPto, new Date(2022, 6 -1, 6))
+
+    expect(av4.length).toBe(1)
+    expect(av5.length).toBe(2)
+    expect(av6.length).toBe(1)
+
+})
 
 test('1. Contract Requires Firearm - Should Return Eligible Guards ', () => {
 
@@ -48,7 +62,7 @@ test('3. Given a contract with Seven days work - it should return the right days
         daysOfWeek : [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
 
-    const workingDays = getContractWorkingDays(contract, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 11))
+    const workingDays = getContractWorkDays(contract, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 11))
     expect( workingDays.length ).toBe(8)
 
 })
@@ -58,7 +72,7 @@ test('4. Given a contract with Seven days work, and an interval of two days - it
         daysOfWeek : [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
 
-    const workingDays = getContractWorkingDays(contract, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 5))
+    const workingDays = getContractWorkDays(contract, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 5))
     expect( workingDays.length ).toBe(2)
 })
 
@@ -127,7 +141,7 @@ test('6. Given a contract with Seven days work - it should return the right days
         daysOfWeek : [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
 
-    const workingDays = getContractWorkingDays(contract, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 11))
+    const workingDays = getContractWorkDays(contract, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 11))
     expect( workingDays.length ).toBe(8)
 
 })
@@ -137,8 +151,21 @@ test('7. Given a contract with Seven days work, and an interval of two days - it
         daysOfWeek : [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     }
 
-    const workingDays = getContractWorkingDays(contract, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 5))
+    const workingDays = getContractWorkDays(contract, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 5))
     expect( workingDays.length ).toBe(2)
+
+    const workingEveryDayOfTheYear = getContractWorkDays(mockContract, new Date(2022, 1 - 1, 1), new Date(2022,12 - 1,31))
+    expect(workingEveryDayOfTheYear.length).toBe(365)
+
+    const mockContractMondaysOnly = {
+        _id : '1234567',
+        name : "Home Depot",
+        daysOfWeek : [ "Monday"],
+        requireArmedGuard : true
+    }
+    const workingOnMondays = getContractWorkDays(mockContractMondaysOnly, new Date(2022, 1 - 1, 1), new Date(2022,12 - 1,31))
+    expect(workingOnMondays.length).toBe(52)
+
 })
 
 test('8. Given a Contract, and all Guards on PTO on a working day - it should return an empty list of available guards for a certain day', () => {
@@ -300,12 +327,71 @@ test('11. Given contract, ineligible guards, PTO schedule, and range of working 
     })
 })
 
+test('12. Given list of contracts and list of guards - it should return the list of eligible guards per contract', () => {
+
+    const eligibleGuardsPerContract = findEligibleGuardsPerContract(mockOfContractsList, mockGuards)
+
+    eligibleGuardsPerContract.forEach( egpc => {
+        const contract = mockOfContractsList.find(c => c._id === egpc.contractId)
+        const guardsMeetContractRequirement = egpc.guards.every(g => g.fireArmLicense === contract.requireArmedGuard)
+        expect(guardsMeetContractRequirement).toBe(true)
+    } )
+})
+
+test('13. Given list of contracts and date range - it should return the list of working days per contract', () => {
+    const contractsWorkDays = getContractsWorkDays(mockOfContractsList, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 7))
+
+    expect(contractsWorkDays[0].workDays.length).toBe(4)
+    expect(contractsWorkDays[1].workDays.length).toBe(2)
+
+})
+
+test('14. Given list of contracts, list of guards and their PTO, and date range - it should return schedule options per contract', () => {
+    const optionsPerContract = getScheduleOptionsPerContract(mockOfContractsList, mockGuards, mockPtos, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 7))
+    const contract1FirstDay = (new Date(2022, 6 - 1, 4)).toString()
+    expect(optionsPerContract[0].option[contract1FirstDay].length).toBe(1)
+
+    const contract1SecondDay = (new Date(2022, 6 - 1, 5)).toString()
+    expect(optionsPerContract[0].option[contract1SecondDay].length).toBe(2)
+
+    const contract1ThirdDay = (new Date(2022, 6 - 1, 6)).toString()
+    expect(optionsPerContract[0].option[contract1ThirdDay].length).toBe(1)
+
+    const contract1FourthDay = (new Date(2022, 6 - 1, 7)).toString()
+    expect(optionsPerContract[0].option[contract1FourthDay].length).toBe(2)
+
+    const contract2FirstDay = (new Date(2022, 6 - 1, 4)).toString()
+    expect(optionsPerContract[1].option[contract2FirstDay].length).toBe(2)
+
+    const contract2SecondDay = (new Date(2022, 6 - 1, 5)).toString()
+    expect(optionsPerContract[1].option[contract2SecondDay].length).toBe(4)
+})
+
+test('15. ', () => {
+    const optionsPerContract = getScheduleOptionsPerContract(mockOfContractsList, mockGuards, mockPtos, new Date(2022, 6 - 1, 4), new Date(2022, 6 - 1, 7))
+
+    console.log(optionsPerContract)
+
+
+    const schedule = createScheduleForAllContracts(optionsPerContract)
+})
+
 const mockContract = {
     _id : '1234567',
     name : "Home Depot",
     daysOfWeek : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     requireArmedGuard : true
 }
+
+const mockOfContractsList = [
+    mockContract,
+     {
+        _id : '89101112',
+        name : "Walmart",
+        daysOfWeek : ["Sunday", "Friday", "Saturday"],
+        requireArmedGuard : false
+    }
+]
 
 const mockGuards = [
     {

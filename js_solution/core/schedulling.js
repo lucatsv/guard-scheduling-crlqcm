@@ -13,22 +13,33 @@ const getPTOPerGuard = (listOfPTOs) => {
         if(!ptoPerGuard[element.guardId]) {
             ptoPerGuard[element.guardId] = []
         }
-        ptoPerGuard[element.guardId].push(element.date)
+        ptoPerGuard[element.guardId].push((new Date(element.date)).toLocaleDateString("en-US", {timeZone : "UTC"}))
     });
 
     return ptoPerGuard
 }
 
-const getContractWorkingDays = (contract, from, to) => {
+const getContractWorkDays = (contract, from, to) => {
     const contractDaysOfWeek = contract.daysOfWeek.map(dow => dayOfWeekToInteger(dow)).sort()
     const workingDays = []
+
     for (const d = from; from <= to; d.setDate(d.getDate() + 1)) {
         const dayOfWeek = d.getDay()
         if(contractDaysOfWeek.some(cd => cd === dayOfWeek)) {
             workingDays.push(new Date(d))
        }
     }
+
     return workingDays
+}
+
+const getContractsWorkDays = (contracts, from, to) => {
+    const contractsWorkDays = []
+    for(const contract of contracts) {
+        const contractWorkDays = getContractWorkDays(contract, new Date(from), new Date(to))
+        contractsWorkDays.push({ contractId : contract._id, workDays : contractWorkDays })
+    }
+    return contractsWorkDays
 }
 
 const dayOfWeekToInteger = (dayOfWeek) => {
@@ -63,7 +74,8 @@ const findAvailableGuardsOnDay = (eligibleGuards, guardsPTO, dayOfWork) => {
 
     for(const guard of eligibleGuards) {
         const guardPTOs = guardsPTO[guard._id]
-        if(!guardPTOs?.some(d => d.getTime() === dayOfWork.getTime())) {
+
+        if(!guardPTOs?.some(d => toUTCString(d) === toUTCString(dayOfWork))){
             availableGuardsOnDay.push(guard)
         }
         
@@ -77,15 +89,44 @@ const getScheduleOptions = (contract, guards, ptos, from, to) => {
 
     const guardsPTO = getPTOPerGuard(ptos)
 
-    const workingDays = getContractWorkingDays(contract, from, to)
+    const workingDays = getContractWorkDays(contract, from, to)
 
     const scheduleOption = {}
     for(const workDay of workingDays) {
         const availableGuards = findAvailableGuardsOnDay(eligibleGuards, guardsPTO, workDay)
-        addElementsToObjectArrayProperty(scheduleOption, workDay, availableGuards)
+        addElementsToObjectArrayProperty(scheduleOption, workDay.toString(), availableGuards)
     }
 
     return scheduleOption;
+}
+
+const getScheduleOptionsPerContract = (contracts, guards, ptos, from, to) => {
+
+    const eligibleGuardsPerContract = findEligibleGuardsPerContract(contracts, contracts)
+    const guardsPTO = getPTOPerGuard(ptos)
+    const workingDaysPerContract = getContractsWorkDays(contracts, from, to)
+
+    const scheduleOptionPerContract = []
+
+    for(const contract of contracts) {
+        const contractScheduleOption = getScheduleOptions(contract, guards, ptos, new Date(from), new Date(to))
+        scheduleOptionPerContract.push({ contractId : contract._id, option : contractScheduleOption })
+    }
+
+    return scheduleOptionPerContract
+
+}
+
+const findEligibleGuardsPerContract = (contracts, guards) => {
+
+    const eligibleGuardsPerContract = []
+
+    for(const contract of contracts) {
+        const contractEligibleGuards = guards.filter(g => g.fireArmLicense === contract.requireArmedGuard)
+        eligibleGuardsPerContract.push({ contractId : contract._id , guards : contractEligibleGuards }) 
+    }
+
+    return eligibleGuardsPerContract
 }
 
 const leastAvailableGuardFromPossibleGuards = (guardsShiftAvailability, listOfPossibleGuards) => {
@@ -115,7 +156,7 @@ const createSchedule = (scheduleOption) => {
 
         const leastAvailable = leastAvailableGuardFromPossibleGuards(guardsShiftAvailability, guardsAvailableOnTheDay)
 
-        const normalizedDate = (new Date(date)).toLocaleString("en-US").split(', ')[0]
+        const normalizedDate = toUTCString(date).split(', ')[0]
 
         const scheduledGuard = flatScheduleGuardOptions.find(g => g._id === leastAvailable.guardId)?.name
 
@@ -130,6 +171,50 @@ const createSchedule = (scheduleOption) => {
     return schedule
 }
 
+const createScheduleForAllContracts = (scheduleOptionPerContract) => {
+    
+    const schedule = []
+    
+    for(const contractOption of scheduleOptionPerContract) {
+
+        Object.keys(contractOption.option).forEach(day => {
+
+            const guard = contractOption.option[day][0]
+
+            schedule.push({ day, contractId : contractOption.contractId, guard : guard?.name })
+
+            assignGuardToShift(scheduleOptionPerContract, day.toString(), guard)
+        })
+    }
+
+    console.log({ schedule })
+    return schedule
+}
+
+const assignGuardToShift = (scheduleOptionPerContract, day, guard) => {
+    for(const contractSchedule of scheduleOptionPerContract) {
+
+        Object.keys(contractSchedule.option).forEach(scheduleDay => {
+            if(scheduleDay === day)
+                contractSchedule.option[scheduleDay] = contractSchedule.option[scheduleDay].filter(g => g._id !== guard?._id)
+         
+        })
+
+       //console.log(day, 2, contractSchedule, contractSchedule[day.toString()])
+    }
+
+}
+
+const doStuff = (shifts) => {
+    const availableGuards = []
+    for(const shift of shifts) 
+    {
+        availableGuards = [...shift.guards]
+    }
+
+    return availableGuards
+}
+
 const addElementsToObjectArrayProperty = (object, propertyName, elements) => {
     if(!object[propertyName]) {
         object[propertyName] = []
@@ -137,4 +222,8 @@ const addElementsToObjectArrayProperty = (object, propertyName, elements) => {
     object[propertyName].push(...elements)
 }
 
-module.exports = { findEligibleGuards, findAvailableGuardsOnDay, getPTOPerGuard, getContractWorkingDays, getScheduleOptions, createSchedule, UNAVAILABLE_GUARDS_ERROR_MESSAGE }
+const toUTCString = (date) => {
+    return (new Date(date)).toLocaleString('en-US', {timeZone : 'UTC'})
+}
+
+module.exports = { findEligibleGuards, findAvailableGuardsOnDay, getPTOPerGuard, getContractWorkDays, getScheduleOptions, getScheduleOptionsPerContract, createSchedule, createScheduleForAllContracts, findEligibleGuardsPerContract, getContractsWorkDays, UNAVAILABLE_GUARDS_ERROR_MESSAGE }

@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 const guardRoute = require('./routes/guard' )
 const contractRoute = require('./routes/contract' )
 const ptoRoute = require('./routes/pto' )
+const scheduleRoute = require('./routes/schedule' )
 
 require('dotenv/config')
 
@@ -16,6 +17,7 @@ app.use(bodyParser.json())
 app.use('/guard', guardRoute)
 app.use('/contract', contractRoute)
 app.use('/pto', ptoRoute)
+app.use('/schedule', scheduleRoute)
 
 app.get('/health', async (req, res) => {
     try {

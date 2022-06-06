@@ -2,40 +2,54 @@ const express = require('express')
 const Contract = require('../models/Contract')
 const Guard = require('../models/Guard')
 const PTO = require('../models/PTO')
+const { getScheduleOptions, getScheduleOptionsPerContract, createSchedule, createScheduleForAllContracts } = require('../core/schedulling')
+
 const router = express.Router()
 
-router.get('/', async (req, res) => {
+router.get('/:contractId', async (req, res) => {
     try {
+        const {fromDate, toDate} = req.query
 
-        const fromDate = req.body.fromDate
-        const toDate = req.body.toDate
-        const contractId = req.body.contractId
+        const contractId = req.params.contractId
 
-        const contract = await Contract.findById(contractId)
+        const contractPromise = Contract.findById(contractId)
+        const guardsPromise = Guard.find()
+        const ptosPromise = PTO.find()
+        const [contract, guards, ptos] = await Promise.all([contractPromise, guardsPromise, ptosPromise])
 
-        // find guards that meet the contract requirement
-        const eligibleGuards = await Guard.find({ fireArmLicense : contract.requireArmedGuard })
-        const eligibleGuardsId = eligibleGuards.map(eg => eg._id)
-        
-        // get a list of eligibleGuards in PTO
-        const guardsInPTO = await PTO.find({ guardId : eligibleGuardsId })
-  
-        const guardsInPTODuringTheSchedule = guardsInPTO.filter(g => fromDate >= g.date &&
-                                                                    toDate <= g.date)
-        const guardPto = {}
+        const options = getScheduleOptions(contract, guards, ptos, new Date(fromDate.split('-')[0],fromDate.split('-')[1] - 1,fromDate.split('-')[2]), new Date(toDate.split('-')[0],toDate.split('-')[1] - 1,toDate.split('-')[2]))
 
-        guardsInPTO.forEach(g => {
-            guardPto[g.guardId].push() 
-        })
+        const schedule = createSchedule(options)
 
-        const contractDaysOfWeek = contract.daysOfWeek.map(d => daysOfWeekToInteger(d))
-
-
+        res.status(200).json({ schedule })
     } catch(error) {
-        res.status(500).json({ "error" : error})
+        res.status(500).json({ error })
     }
 })
 
+
+router.get('/', async (req, res) => {
+    try {
+        const {fromDate, toDate} = req.query
+        const contractsPromise = Contract.find()
+        const guardsPromise = Guard.find()
+        const ptosPromise = PTO.find()
+        const [contracts, guards, ptos] = await Promise.all([contractsPromise, guardsPromise, ptosPromise])
+
+        const contractsScheduleOptions = getScheduleOptionsPerContract(contracts, guards, ptos, fromDate, toDate)
+
+        console.log( { contractsScheduleOptions })
+
+        const schedule = createScheduleForAllContracts(contractsScheduleOptions)
+
+        console.log( { schedule })
+
+        res.status(200).json(schedule)
+
+    } catch(error) {
+        res.status(500).json(error)
+    }
+})
 
 
 module.exports = router
