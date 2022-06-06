@@ -1,4 +1,5 @@
 const express = require('express')
+const { Http } = require('winston/lib/winston/transports')
 const PTO = require('../models/PTO')
 const router = express.Router()
 const logger = require('../util/logger')
@@ -8,7 +9,7 @@ router.get('/', async (req, res) => {
         const listOfPTOs = await PTO.find()
         res.status(200).json(listOfPTOs)
     } catch(error) {
-        logger.error(error)
+        logger.error(error.message)
         res.status(500).json({ "error" : 'Internal error'})
     }
 })
@@ -24,10 +25,13 @@ router.put('/', async (req, res) => {
         let guardPTO = existingPTO
         if(!existingPTO) {
             guardPTO = await pto.save()
+            res.status(201).json(guardPTO)
         }
-        res.status(200).json(guardPTO)
+        else {
+            res.status(204).json(guardPTO)
+        }
     } catch(error) {
-        logger.error(error)
+        logger.error(error.message)
         res.status(500).json({ "error" : 'Internal error'})
     }
 })

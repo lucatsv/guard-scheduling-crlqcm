@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const GuardSchema = mongoose.Schema({
     _id : {
         type : String,
-        required : true
+        required : false
     },
     name : {
         type : String,

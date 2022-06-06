@@ -24,13 +24,19 @@ router.get('/:contractId', async (req, res) => {
 
         res.status(200).json({ schedule })
     } catch(error) {
-        res.status(500).json({ error })
+        logger.error(error.message)
+        res.status(500).json({ error : "Internal error message" })
     }
 })
 
 router.get('/', async (req, res) => {
     try {
         const {fromDate, toDate} = req.query
+        if(fromDate == undefined || toDate == undefined) {
+            res.status(400).json({ error: "fromDate and toDate are required parameters" })
+            return
+        }
+        
         const contractsPromise = Contract.find()
         const guardsPromise = Guard.find()
         const ptosPromise = PTO.find()
@@ -42,7 +48,7 @@ router.get('/', async (req, res) => {
 
         res.status(200).json(schedule)
     } catch(error) {
-        logger.error(error)
+        logger.error(error.message)
         res.status(500).json({ "error" : 'Internal error'})
     }
 })
