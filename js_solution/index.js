@@ -6,7 +6,7 @@ const guardRoute = require('./routes/guard' )
 const contractRoute = require('./routes/contract' )
 const ptoRoute = require('./routes/pto' )
 const scheduleRoute = require('./routes/schedule' )
-
+const logger = require('./util/logger')
 require('dotenv/config')
 
 const app = express()
@@ -24,19 +24,15 @@ app.get('/health', async (req, res) => {
         await connectToDB()
         res.status(200).json({ message : "it works!" })
     } catch (error) {
-        console.error(error)
-        res.status(500).json({ error })
+        logger.error(error)
+        res.status(500).json({ error : "Could not connect to the DB!" })
     }
 })
 
-const connectToDB = async () => {
-    return await mongoose.connect(process.env.DB_CONNECTION_STRING)
-}
-
-connectToDB().then(() => {
-    console.log("All good! Connected to DB successfuly")
+mongoose.connect(process.env.DB_CONNECTION_STRING).then(() => {
+    logger.info("All good! Connected to DB successfuly")
 }).catch((error) => {
-    console.error(`Error! ${ error }`)
+    logger.error(`Error! ${ error }`)
 })
 
 app.listen(3000)

@@ -1,13 +1,15 @@
 const express = require('express')
 const PTO = require('../models/PTO')
 const router = express.Router()
+const logger = require('../util/logger')
 
 router.get('/', async (req, res) => {
     try {
         const listOfPTOs = await PTO.find()
         res.status(200).json(listOfPTOs)
     } catch(error) {
-        res.status(500).json({ "error" : error})
+        logger.error(error)
+        res.status(500).json({ "error" : 'Internal error'})
     }
 })
 
@@ -25,9 +27,9 @@ router.put('/', async (req, res) => {
         }
         res.status(200).json(guardPTO)
     } catch(error) {
-        res.status(500).json({ "error" : error})
+        logger.error(error)
+        res.status(500).json({ "error" : 'Internal error'})
     }
-
 })
 
 

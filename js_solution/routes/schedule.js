@@ -3,6 +3,7 @@ const Contract = require('../models/Contract')
 const Guard = require('../models/Guard')
 const PTO = require('../models/PTO')
 const { getScheduleOptions, getScheduleOptionsPerContract, createSchedule, createScheduleForAllContracts } = require('../core/schedulling')
+const logger = require('../util/logger')
 
 const router = express.Router()
 
@@ -38,16 +39,13 @@ router.get('/', async (req, res) => {
 
         const contractsScheduleOptions = getScheduleOptionsPerContract(contracts, guards, ptos, fromDate, toDate)
 
-        console.log( { contractsScheduleOptions })
-
         const schedule = createScheduleForAllContracts(contractsScheduleOptions)
-
-        console.log( { schedule })
 
         res.status(200).json(schedule)
 
     } catch(error) {
-        res.status(500).json(error)
+        logger.error(error)
+        res.status(500).json({ "error" : 'Internal error'})
     }
 })
 

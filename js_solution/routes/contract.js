@@ -1,13 +1,15 @@
 const express = require('express')
 const Contract = require('../models/Contract')
 const router = express.Router()
+const logger = require('../util/logger')
 
 router.get('/', async (req, res) => {
     try {
         const listOfContracts = await Contract.find()
         res.status(200).json(listOfContracts)
     } catch(error) {
-        res.status(500).json({ "error" : error})
+        logger.error(error)
+        res.status(500).json({ "error" : 'Internal error'})
     }
 })
 
@@ -23,7 +25,8 @@ router.post('/', async (req, res) => {
         const savedContract = await contract.save()
         res.status(200).json(savedContract)
     } catch(error) {
-        res.status(500).json({ "error" : error})
+        logger.error(error)
+        res.status(500).json({ "error" : 'Internal error'})
     }
 
 })
@@ -33,7 +36,8 @@ router.delete('/:id', async (req, res) => {
         const removedContract = await Contract.remove({_id : req.params.id})
         res.status(200).json(removedContract)
     } catch(error) {
-        res.status(500).json({ "error" : error})
+        logger.error(error)
+        res.status(500).json({ "error" : 'Internal error'})
     }
 })
 
@@ -42,7 +46,8 @@ router.get('/:id', async (req, res) => {
         const contract = await Contract.findById(req.params.id)
         res.status(200).json(contract)
     } catch(error) {
-        res.status(500).json({ "error" : error})
+        logger.error(error)
+        res.status(500).json({ "error" : 'Internal error'})
     }
 })
 
