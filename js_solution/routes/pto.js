@@ -30,8 +30,9 @@ router.put('/', async (req, res) => {
             res.status(204).json(guardPTO)
         }
     } catch (error) {
-        logger.error(error.message)
-        res.status(500).json({ error: 'Internal error' })
+        const errorID = crypto.randomUUID9()
+        logger.error(`${errorID} - ${error.message}`)
+        res.status(500).json({ error: `Internal error ${errorID}` })
     }
 })
 

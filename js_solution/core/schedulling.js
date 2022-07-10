@@ -199,8 +199,7 @@ const createScheduleForAllContracts = (contract, scheduleOptionPerContract) => {
             const guard = contractOption.option[day][0]
 
             const contractName = contract.find((c) => c._id === contractOption.contractId).name
-
-            schedule.push({ day, contract: contractName, guard: guard ? guard.name : UNAVAILABLE_GUARDS_ERROR_MESSAGE })
+            schedule.push({ day : (new Date(day)).toISOString(), contract: contractName, guard: guard ? guard.name : UNAVAILABLE_GUARDS_ERROR_MESSAGE })
 
             assignGuardToShift(scheduleOptionPerContract, day.toString(), guard)
         })

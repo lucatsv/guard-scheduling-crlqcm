@@ -13,7 +13,7 @@ const router = express.Router()
 router.get('/', async (req, res) => {
     try {
         const { fromDate, toDate } = req.query
-        if (fromDate === null || toDate === null) {
+        if (fromDate === undefined || toDate === undefined) {
             res.status(400).json({ error: 'fromDate and toDate are required parameters' })
             return
         }
