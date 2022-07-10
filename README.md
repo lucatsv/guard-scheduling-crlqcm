@@ -1,7 +1,5 @@
 ### Objective
  
-One of the first modules we are going to build at Belfry is scheduling. Owners of security guard firms spend a significant amount of time ensuring all of their shifts are filled each week, and a dropped shift can mean the end of a valuable contract. Automating part of this process would be a major value add as part of our software!
- 
 The deliverable of this assignment is to implement a scheduling REST API using the language and framework of your choice ( flask may be the easiest setup for something this simple, but up to you to go with what you're most familiar with).
  
 ### Important Concepts:
@@ -78,7 +76,6 @@ I've added some starter code for running a web server using Python - Flask or Ty
 - Normally we would be persisting the data structures and models to permanent storage, but for the sake of limiting the scope of this project we can persist them to an in-memory structure. (unless you prefer to implement it as something that writes to a db such as django's ORM, sqlalchemy, etc.)
 - Please feel free to consult any external resources.
 - Please make assumptions around any behavior not explicitly defined, but document said assumptions for later discussion.
-- If at any point you have a question about the project, please feel free to email me at: alex@belfrysoftware.com or text me at: 919-830-9521
 - We'll plan to review your solution together and talk about why you made the decisions you went with as well as how we could potentially build out your solution with more functionality.
  
 ### CodeSubmit
@@ -87,6 +84,4 @@ Please push your changes to the master branch when you are happy with it.
 After you have pushed your code, you may submit the assignment on the assignment page.
  
 All the best and happy coding,
- 
-The Belfry Team
 
